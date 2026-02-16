@@ -39,7 +39,7 @@ def run(cmd: list[str]) -> str:
 
 
 def cmd_view(args: argparse.Namespace) -> None:
-    fields = "status,conclusion,createdAt,updatedAt,event,headBranch,headSha,htmlURL,name,workflowDatabaseId"
+    fields = "status,conclusion,createdAt,updatedAt,event,headBranch,headSha,url,name,workflowDatabaseId"
     out = run([
         gh_bin(), "run", "view", str(args.run_id),
         "--repo", args.repo,

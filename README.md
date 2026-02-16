@@ -9,6 +9,13 @@ The goal: small, composable “capability packs” that make an OpenClaw agent r
 ### reminder-engine
 Natural-language reminders backed by OpenClaw cron jobs.
 
+### ci-whisperer
+GitHub Actions “CI autopsy” assistant.
+
+- Fetches run metadata and failing step logs via `gh`
+- Produces a short root-cause + fix options report
+- Optional: can open a PR **only with explicit approval**
+
 **What it does**
 - Turns requests like:
   - “remind me in 20 minutes to stretch”
@@ -39,6 +46,8 @@ Clone the repo and copy/link this folder into your OpenClaw workspace:
 
 ## Proof / Quick test (2 minutes)
 
+### reminder-engine
+
 This skill uses OpenClaw’s built-in **cron** scheduler. The simplest proof is to create a 1–2 minute reminder and verify it ran.
 
 1) Ask your OpenClaw agent:
@@ -62,6 +71,20 @@ When you ask for a reminder, the agent creates a cron job:
 - Recurring reminders → `schedule.kind = "cron"` (with timezone if supported)
 
 And the payload is a `systemEvent` that reads like a reminder when it fires.
+
+### ci-whisperer
+
+A quick proof is to point it at a failing Actions run and confirm it can fetch metadata + failed logs.
+
+Example demo repo (intentionally failing CI):
+- https://github.com/martok9803/ci-whisperer-demo
+
+Try:
+- `python3 skills/ci-whisperer/scripts/ci_autopsy.py list --repo martok9803/ci-whisperer-demo`
+- `python3 skills/ci-whisperer/scripts/ci_autopsy.py view --repo martok9803/ci-whisperer-demo --run-id <id>`
+- `python3 skills/ci-whisperer/scripts/ci_autopsy.py failed-logs --repo martok9803/ci-whisperer-demo --run-id <id>`
+
+(Or ask your agent in chat: “Why did Actions run <url> fail?”)
 
 ## Development
 
