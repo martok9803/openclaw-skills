@@ -1,96 +1,69 @@
 # openclaw-skills
 
-A public collection of **OpenClaw AgentSkills**.
+Open-source **OpenClaw AgentSkills**.
 
-The goal: small, composable “capability packs” that make an OpenClaw agent reliably good at a specific job.
+This repo is a small “skill pack” library: each skill is a focused capability with:
+- a clear trigger description
+- a safe workflow (confirmation gates where needed)
+- optional scripts for deterministic tool-backed execution
 
 ## Skills
 
-### reminder-engine
-Natural-language reminders backed by OpenClaw cron jobs.
+- **reminder-engine** — reliable reminders backed by OpenClaw cron jobs.
+  - Source: `skills/reminder-engine/`
+  - Package: `dist/reminder-engine.skill`
+  - ClawHub: `martok9803-reminder-engine`
 
-### ci-whisperer
-GitHub Actions “CI autopsy” assistant.
+- **ci-whisperer** — GitHub Actions autopsy + (optional) PR fix mode.
+  - Source: `skills/ci-whisperer/`
+  - Package: `dist/ci-whisperer.skill`
+  - ClawHub: `martok9803-ci-whisperer`
 
-- Fetches run metadata and failing step logs via `gh`
-- Produces a short root-cause + fix options report
-- Optional: can open a PR **only with explicit approval**
+## Install
 
-**What it does**
-- Turns requests like:
-  - “remind me in 20 minutes to stretch”
-  - “tomorrow at 9 remind me to pay rent”
-  - “every weekday at 10:30 remind me to stand up”
-  into a cron job (one-shot or recurring).
-- Supports reminder management:
-  - “list my reminders”
-  - “cancel reminder <id>”
-  - “snooze <id> for 1 hour” (implementation guidance)
+### Install from ClawHub (recommended)
 
-**Safety defaults**
-- Always confirm the computed schedule before creating/removing jobs.
-- Avoid secrets in reminder text.
-- Warn before posting reminders into public channels.
+```bash
+npx --yes clawhub@latest install <skill-slug>
+```
 
-## Install / Use
+Examples:
+```bash
+npx --yes clawhub@latest install martok9803-reminder-engine
+npx --yes clawhub@latest install martok9803-ci-whisperer
+```
 
-### Option A: use the packaged `.skill` file
-Download:
-- `dist/reminder-engine.skill`
+### Manual install (workspace)
+Copy a skill folder into your OpenClaw workspace:
+- `<your-openclaw-workspace>/skills/<skill-name>/SKILL.md`
 
-Install into your OpenClaw workspace using your preferred method.
+## Proof / Quick tests
 
-### Option B: use this repo as a working directory
-Clone the repo and copy/link this folder into your OpenClaw workspace:
-- `skills/reminder-engine/`
+### reminder-engine (2 minutes)
+1) Ask your agent: “remind me in 1 minute to test reminders”
+2) Confirm the computed schedule.
+3) Verify:
+   - `cron.list` shows the job
+   - `cron.runs <jobId>` shows status `ok` after it fires
 
-## Proof / Quick test (2 minutes)
-
-### reminder-engine
-
-This skill uses OpenClaw’s built-in **cron** scheduler. The simplest proof is to create a 1–2 minute reminder and verify it ran.
-
-1) Ask your OpenClaw agent:
-- “remind me in 1 minute to test reminders”
-
-2) The agent should respond with the interpreted schedule and ask for confirmation.
-
-3) After confirmation, verify the job exists:
-- `cron.list` (you should see a new job with a next run time)
-
-4) Wait ~1 minute, then verify it fired:
-- `cron.runs <jobId>` (status should be `ok`)
-
-5) Optional cleanup:
-- “cancel reminder <jobId>” (or `cron.remove`)
-
-### How it works (under the hood)
-
-When you ask for a reminder, the agent creates a cron job:
-- One-shot reminders → `schedule.kind = "at"`
-- Recurring reminders → `schedule.kind = "cron"` (with timezone if supported)
-
-And the payload is a `systemEvent` that reads like a reminder when it fires.
-
-### ci-whisperer
-
-A quick proof is to point it at a failing Actions run and confirm it can fetch metadata + failed logs.
-
-Example demo repo (intentionally failing CI):
+### ci-whisperer (5 minutes)
+This repo includes a public demo repo that intentionally fails CI:
 - https://github.com/martok9803/ci-whisperer-demo
 
-Try:
-- `python3 skills/ci-whisperer/scripts/ci_autopsy.py list --repo martok9803/ci-whisperer-demo`
-- `python3 skills/ci-whisperer/scripts/ci_autopsy.py view --repo martok9803/ci-whisperer-demo --run-id <id>`
-- `python3 skills/ci-whisperer/scripts/ci_autopsy.py failed-logs --repo martok9803/ci-whisperer-demo --run-id <id>`
+1) List runs:
+```bash
+python3 skills/ci-whisperer/scripts/ci_autopsy.py list --repo martok9803/ci-whisperer-demo
+```
+2) Pick a run id and fetch failed logs:
+```bash
+python3 skills/ci-whisperer/scripts/ci_autopsy.py failed-logs --repo martok9803/ci-whisperer-demo --run-id <id>
+```
 
-(Or ask your agent in chat: “Why did Actions run <url> fail?”)
+## Safety philosophy
 
-## Development
-
-Local validation + packaging (requires the OpenClaw `skill-creator` scripts):
-- Validate: `quick_validate.py skills/reminder-engine`
-- Package: `package_skill.py skills/reminder-engine ./dist`
+- Skills must not leak secrets.
+- “Write actions” (PRs, deletions, posting) must be **opt-in** and require explicit approval.
+- Prefer small, boring, debuggable scripts over clever magic.
 
 ## License
 

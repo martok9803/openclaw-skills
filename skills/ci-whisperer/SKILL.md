@@ -9,6 +9,20 @@ Fetch GitHub Actions run details, pinpoint the failure, and propose a minimal fi
 
 This skill is meant to feel like a senior engineer doing a fast “CI autopsy”.
 
+## Modes
+
+### Read-only mode (default)
+- Collect evidence, explain root cause, propose fixes.
+- **No pushes, no PRs, no branch creation.**
+
+### PR fix mode (opt-in)
+PR fix mode is allowed only when **both** are true:
+1) The user explicitly asks to open a PR.
+2) A local toggle is enabled (the “on/off button”):
+   - env var: `CI_WHISPERER_WRITE=1`
+
+If the toggle is not enabled, refuse politely and explain how to enable it.
+
 ## Workflow
 
 ### 1) Identify target run
@@ -27,7 +41,7 @@ If the user didn’t specify the repo, ask for it (or infer from context).
 Prefer deterministic tooling. Use `/usr/bin/gh` when the system has multiple `gh` binaries.
 
 Suggested commands:
-- `gh run view <run-id> --repo owner/repo --json status,conclusion,createdAt,updatedAt,event,headBranch,headSha,htmlURL,name`
+- `gh run view <run-id> --repo owner/repo --json status,conclusion,createdAt,updatedAt,event,headBranch,headSha,url,name`
 - `gh run view <run-id> --repo owner/repo --log-failed`
 - `gh run view <run-id> --repo owner/repo --log` (only if needed; can be noisy)
 
@@ -42,12 +56,15 @@ Return:
 - minimal fix options
 - confidence level
 
-### 4) Optional: open a PR (only with explicit approval)
-If the user asks to fix it:
+### 4) (Optional) Open a PR (only with explicit approval + write toggle)
+If the user asks to fix it and `CI_WHISPERER_WRITE=1`:
 - create a branch
 - apply minimal changes
 - run local lint/tests if available
 - open PR with a clear description and link to the failing run
+
+If the user asks but write mode is OFF:
+- provide the patch/diff instructions, but do not push.
 
 ## Safety
 - Never print tokens.
