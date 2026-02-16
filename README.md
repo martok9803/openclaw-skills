@@ -28,15 +28,40 @@ Natural-language reminders backed by OpenClaw cron jobs.
 ## Install / Use
 
 ### Option A: use the packaged `.skill` file
-Download the latest packaged skill from this repo:
+Download:
 - `dist/reminder-engine.skill`
 
-Then install it into your OpenClaw workspace (common pattern):
-- Place it under your workspace `skills/` directory (or import it using your preferred OpenClaw method).
+Install into your OpenClaw workspace using your preferred method.
 
 ### Option B: use this repo as a working directory
-Clone the repo and copy/link the desired skill folder into your OpenClaw workspace:
+Clone the repo and copy/link this folder into your OpenClaw workspace:
 - `skills/reminder-engine/`
+
+## Proof / Quick test (2 minutes)
+
+This skill uses OpenClaw’s built-in **cron** scheduler. The simplest proof is to create a 1–2 minute reminder and verify it ran.
+
+1) Ask your OpenClaw agent:
+- “remind me in 1 minute to test reminders”
+
+2) The agent should respond with the interpreted schedule and ask for confirmation.
+
+3) After confirmation, verify the job exists:
+- `cron.list` (you should see a new job with a next run time)
+
+4) Wait ~1 minute, then verify it fired:
+- `cron.runs <jobId>` (status should be `ok`)
+
+5) Optional cleanup:
+- “cancel reminder <jobId>” (or `cron.remove`)
+
+### How it works (under the hood)
+
+When you ask for a reminder, the agent creates a cron job:
+- One-shot reminders → `schedule.kind = "at"`
+- Recurring reminders → `schedule.kind = "cron"` (with timezone if supported)
+
+And the payload is a `systemEvent` that reads like a reminder when it fires.
 
 ## Development
 
